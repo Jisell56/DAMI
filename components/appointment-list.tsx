@@ -104,13 +104,43 @@ export function AppointmentList({ appointments, onEdit, onDelete, onStatusChange
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-12 w-12 rounded-full hover:bg-primary/10 shrink-0"
+                        className="h-12 w-12 rounded-full hover:bg-primary/10 shrink-0 
+                                   min-h-[48px] min-w-[48px] 
+                                   active:bg-primary/20 
+                                   transition-colors 
+                                   touch-manipulation"
+                        onTouchStart={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          // Forzar el click en dispositivos táctiles
+                          const event = new MouseEvent('click', {
+                            bubbles: true,
+                            cancelable: true,
+                            view: window
+                          });
+                          e.currentTarget.dispatchEvent(event);
+                        }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
                       >
                         <Menu className="h-6 w-6 text-primary" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuItem onClick={() => onEdit(appointment)} className="cursor-pointer">
+                    <DropdownMenuContent 
+                      align="end" 
+                      className="w-48 z-50"
+                      onTouchStart={(e) => e.stopPropagation()}
+                    >
+                      <DropdownMenuItem 
+                        onClick={() => onEdit(appointment)} 
+                        className="cursor-pointer"
+                        onTouchEnd={(e) => {
+                          e.preventDefault();
+                          onEdit(appointment);
+                        }}
+                      >
                         <Edit className="h-4 w-4 mr-2" />
                         Editar
                       </DropdownMenuItem>
@@ -119,6 +149,10 @@ export function AppointmentList({ appointments, onEdit, onDelete, onStatusChange
                         <DropdownMenuItem
                           onClick={() => onStatusChange(appointment.id, "completed")}
                           className="cursor-pointer text-[oklch(0.40_0.12_150)]"
+                          onTouchEnd={(e) => {
+                            e.preventDefault();
+                            onStatusChange(appointment.id, "completed");
+                          }}
                         >
                           <Check className="h-4 w-4 mr-2" />
                           Marcar como Asistió
@@ -129,6 +163,10 @@ export function AppointmentList({ appointments, onEdit, onDelete, onStatusChange
                         <DropdownMenuItem
                           onClick={() => onStatusChange(appointment.id, "cancelled")}
                           className="cursor-pointer text-[oklch(0.50_0.12_30)]"
+                          onTouchEnd={(e) => {
+                            e.preventDefault();
+                            onStatusChange(appointment.id, "cancelled");
+                          }}
                         >
                           <X className="h-4 w-4 mr-2" />
                           Marcar como Canceló
@@ -139,6 +177,10 @@ export function AppointmentList({ appointments, onEdit, onDelete, onStatusChange
                         <DropdownMenuItem
                           onClick={() => onStatusChange(appointment.id, "scheduled")}
                           className="cursor-pointer text-primary"
+                          onTouchEnd={(e) => {
+                            e.preventDefault();
+                            onStatusChange(appointment.id, "scheduled");
+                          }}
                         >
                           <Clock className="h-4 w-4 mr-2" />
                           Marcar como Pendiente
@@ -148,6 +190,10 @@ export function AppointmentList({ appointments, onEdit, onDelete, onStatusChange
                       <DropdownMenuItem
                         onClick={() => onDelete(appointment.id)}
                         className="cursor-pointer text-destructive"
+                        onTouchEnd={(e) => {
+                          e.preventDefault();
+                          onDelete(appointment.id);
+                        }}
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
                         Eliminar
