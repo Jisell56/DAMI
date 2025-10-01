@@ -1,8 +1,9 @@
 "use client"
 
+import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Calendar, Clock, Check, X, Trash2, Edit, Menu } from "lucide-react"
 import type { Appointment, AppointmentStatus } from "@/app/page"
 
@@ -14,6 +15,8 @@ interface AppointmentListProps {
 }
 
 export function AppointmentList({ appointments, onEdit, onDelete, onStatusChange }: AppointmentListProps) {
+  const [openSheetId, setOpenSheetId] = useState<string | null>(null)
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString + "T00:00:00")
     return date.toLocaleDateString("es-ES", {
@@ -54,6 +57,11 @@ export function AppointmentList({ appointments, onEdit, onDelete, onStatusChange
     }
   }
 
+  const handleAction = (callback: () => void) => {
+    callback()
+    setOpenSheetId(null)
+  }
+
   // Group appointments by date
   const groupedAppointments = appointments.reduce(
     (groups, appointment) => {
@@ -66,13 +74,6 @@ export function AppointmentList({ appointments, onEdit, onDelete, onStatusChange
     },
     {} as Record<string, Appointment[]>,
   )
-
-  // Función para manejar touch de forma segura
-  const handleTouch = (e: React.TouchEvent, callback: () => void) => {
-    // No usar preventDefault() que causa el error
-    e.stopPropagation()
-    callback()
-  }
 
   return (
     <div className="space-y-6">
@@ -106,80 +107,80 @@ export function AppointmentList({ appointments, onEdit, onDelete, onStatusChange
                     </div>
                   </div>
 
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
+                  <Sheet
+                    open={openSheetId === appointment.id}
+                    onOpenChange={(open) => setOpenSheetId(open ? appointment.id : null)}
+                  >
+                    <SheetTrigger asChild>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-12 w-12 rounded-full hover:bg-primary/10 shrink-0 
                                    min-h-[48px] min-w-[48px] 
                                    active:bg-primary/20 
-                                   transition-colors 
-                                   touch-manipulation"
-                        // SOLUCIÓN: Usar onPointerDown en lugar de onTouchStart
-                        onPointerDown={(e) => {
-                          e.stopPropagation()
-                        }}
+                                   transition-colors"
                       >
                         <Menu className="h-6 w-6 text-primary" />
                       </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent 
-                      align="end" 
-                      className="w-48 z-50"
-                    >
-                      <DropdownMenuItem 
-                        onClick={() => onEdit(appointment)} 
-                        className="cursor-pointer"
-                        onPointerDown={(e) => e.stopPropagation()}
-                      >
-                        <Edit className="h-4 w-4 mr-2" />
-                        Editar
-                      </DropdownMenuItem>
-
-                      {appointment.status !== "completed" && (
-                        <DropdownMenuItem
-                          onClick={() => onStatusChange(appointment.id, "completed")}
-                          className="cursor-pointer text-[oklch(0.40_0.12_150)]"
-                          onPointerDown={(e) => e.stopPropagation()}
+                    </SheetTrigger>
+                    <SheetContent side="bottom" className="rounded-t-3xl">
+                      <SheetHeader>
+                        <SheetTitle className="text-left">Opciones de Cita</SheetTitle>
+                      </SheetHeader>
+                      <div className="flex flex-col gap-2 mt-6">
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start h-14 text-base bg-transparent"
+                          onClick={() => handleAction(() => onEdit(appointment))}
                         >
-                          <Check className="h-4 w-4 mr-2" />
-                          Marcar como Asistió
-                        </DropdownMenuItem>
-                      )}
+                          <Edit className="h-5 w-5 mr-3" />
+                          Editar
+                        </Button>
 
-                      {appointment.status !== "cancelled" && (
-                        <DropdownMenuItem
-                          onClick={() => onStatusChange(appointment.id, "cancelled")}
-                          className="cursor-pointer text-[oklch(0.50_0.12_30)]"
-                          onPointerDown={(e) => e.stopPropagation()}
+                        {appointment.status !== "completed" && (
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start h-14 text-base text-[oklch(0.40_0.12_150)] bg-transparent"
+                            onClick={() => handleAction(() => onStatusChange(appointment.id, "completed"))}
+                          >
+                            <Check className="h-5 w-5 mr-3" />
+                            Marcar como Asistió
+                          </Button>
+                        )}
+
+                        {appointment.status !== "cancelled" && (
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start h-14 text-base text-[oklch(0.50_0.12_30)] bg-transparent"
+                            onClick={() => handleAction(() => onStatusChange(appointment.id, "cancelled"))}
+                          >
+                            <X className="h-5 w-5 mr-3" />
+                            Marcar como Canceló
+                          </Button>
+                        )}
+
+                        {appointment.status !== "scheduled" && (
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start h-14 text-base text-primary bg-transparent"
+                            onClick={() => handleAction(() => onStatusChange(appointment.id, "scheduled"))}
+                          >
+                            <Clock className="h-5 w-5 mr-3" />
+                            Marcar como Pendiente
+                          </Button>
+                        )}
+
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start h-14 text-base text-destructive bg-transparent"
+                          onClick={() => handleAction(() => onDelete(appointment.id))}
                         >
-                          <X className="h-4 w-4 mr-2" />
-                          Marcar como Canceló
-                        </DropdownMenuItem>
-                      )}
-
-                      {appointment.status !== "scheduled" && (
-                        <DropdownMenuItem
-                          onClick={() => onStatusChange(appointment.id, "scheduled")}
-                          className="cursor-pointer text-primary"
-                          onPointerDown={(e) => e.stopPropagation()}
-                        >
-                          <Clock className="h-4 w-4 mr-2" />
-                          Marcar como Pendiente
-                        </DropdownMenuItem>
-                      )}
-
-                      <DropdownMenuItem
-                        onClick={() => onDelete(appointment.id)}
-                        className="cursor-pointer text-destructive"
-                        onPointerDown={(e) => e.stopPropagation()}
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Eliminar
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                          <Trash2 className="h-5 w-5 mr-3" />
+                          Eliminar
+                        </Button>
+                      </div>
+                    </SheetContent>
+                  </Sheet>
                 </div>
               </Card>
             ))}
